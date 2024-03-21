@@ -29,7 +29,7 @@ def calculate_employment_years(days_employed):
     return abs(days_employed) / 365
 
 # Charger l'image
-image = Image.open('logo.png')
+image = Image.open('logo.PNG')
 
 # Ajouter l'image à la barre latérale
 st.sidebar.image(image, use_column_width=False)
@@ -266,3 +266,5 @@ elif page == 'Update Features':
         
         else:
             st.write(f"Client ID = {sk_id_curr} not found in the database.")
+
+
