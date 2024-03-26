@@ -59,7 +59,7 @@ if page == 'Prediction':
                 
             # Display the prediction for the client with SK_ID_CURR
             st.write(f"Prediction for client SK_ID_CURR = {sk_id_curr}:")
-            st.write(f"Probability of failure: {prediction_data['probability_of_failure']:.4f}")
+            #st.write(f"Probability of failure: {prediction_data['probability_of_failure']:.4f}")
             st.write(f"Prediction: {prediction_data['prediction']}")
 
             # Plot a gauge
@@ -85,6 +85,7 @@ if page == 'Prediction':
             if not client_info.empty:
                 # Show principales informations about a client
                 client_info = data[data['SK_ID_CURR'] == sk_id_curr]
+                client_info = client_info.drop(columns=['TARGET'])
                 st.write(client_info)
                 st.write(f"Age: {calculate_age(client_info['DAYS_BIRTH'].values[0]):.2f} years")
                 st.write(f"Income: {client_info['AMT_INCOME_TOTAL'].values[0]}")
@@ -102,8 +103,8 @@ elif page == 'Features importances':
         client_index = data[data['SK_ID_CURR'] == sk_id_curr].index[0]
         shap_values_client = shap_values[client_index]
 
-        # Waterfall Plot
-        st.subheader('Summary Plot')
+        # Summary Plot
+        st.subheader('Features importance globale')
         # Create a list for short features names
         short_feature_names = [name[:20] for name in feature_names]
         # Plot the SHAP values
@@ -115,18 +116,18 @@ elif page == 'Features importances':
         if client_index is not None:
 
             #waterfall plot
-            st.subheader('Waterfall Plot')
+            st.subheader('Features importance locale')
             plt.figure(figsize=(10,5))
             shap.waterfall_plot(shap.Explanation(values=shap_values_client, base_values=0, feature_names=short_feature_names))
             st.pyplot(plt)
             # Afficher l'importance des features pour le client spécifique
-            st.subheader('Force plot')
+            #st.subheader('Force plot')
             # Calculer la valeur moyenne attendue
-            expected_value = -0.4900967311988457
+            #expected_value = -0.4900967311988457
             # Utiliser le plot de force de SHAP avec l'option matplotlib=True
-            plt.figure(figsize=(10,5))
-            shap.force_plot(expected_value, shap_values_client, feature_names=short_feature_names, matplotlib=True)
-            st.pyplot(plt)
+            #plt.figure(figsize=(10,5))
+            #shap.force_plot(expected_value, shap_values_client, feature_names=short_feature_names, matplotlib=True)
+            #st.pyplot(plt)
 
 elif page == 'Features visualization':
     # Liste des caractéristiques numériques et catégorielles
@@ -154,22 +155,33 @@ elif page == 'Features visualization':
     # Création d'un histogramme pour la caractéristique numérique sélectionnée
     if feature_type == 'Num':
         fig, ax = plt.subplots()
-        ax.hist(data[feature], bins=30, edgecolor='black')
+        #ax.hist(data[feature], bins=30, edgecolor='black')
+        #ax.set_title(f'Distribution de {feature}')
+        # Histogramme pour la distribution de la caractéristique
+        ax.hist(data[data['TARGET'] == 0][feature], bins=30, edgecolor='black', alpha=0.5, label='TARGET = 0')
+        ax.hist(data[data['TARGET'] == 1][feature], bins=30, edgecolor='black', alpha=0.5, label='TARGET = 1')
         ax.set_title(f'Distribution de {feature}')
+        ax.legend()
         #sns.histplot(data[feature], bins=30, edgecolor='black', kde=True)
         #ax.set_title(f'Distribution de {feature}', fontsize=16)
 
         # Ajout d'une ligne verticale pour la valeur de la caractéristique du client sélectionné
+        #if sk_id_curr in data['SK_ID_CURR'].values:
+        #   client_value = data[data['SK_ID_CURR'] == sk_id_curr][feature].values[0]
+         #   if feature_type == 'Num':
+        #        ax.axvline(client_value, color='red', linestyle='dashed', linewidth=2)
+        #        ax.legend([f'Client : {round(client_value, 2)}'])
+
         if sk_id_curr in data['SK_ID_CURR'].values:
-            client_value = data[data['SK_ID_CURR'] == sk_id_curr][feature].values[0]
-            if feature_type == 'Num':
+                client_value = data[data['SK_ID_CURR'] == sk_id_curr][feature].values[0]
                 ax.axvline(client_value, color='red', linestyle='dashed', linewidth=2)
-                ax.legend([f'Client : {round(client_value, 2)}'])
+                ax.legend(['Granted', 'Refused', f'Client : {round(client_value, 2)}'])
 
     else:  # Création d'un diagramme à barres pour la caractéristique catégorielle sélectionnée
         fig, ax = plt.subplots()
         data[feature].value_counts().plot(kind='bar', ax=ax)
         ax.set_title(f'Subplot of {feature}')
+
         #sns.countplot(data=data, x=feature, palette='pastel')
         #ax.set_title(f'Compte de {feature}', fontsize=16)
 
@@ -205,43 +217,99 @@ elif page == 'Features visualization':
     # Création d'un diagramme de dispersion pour deux caractéristiques numériques
     if feature1_type == 'Num' and feature2_type == 'Num':
         fig, ax = plt.subplots()
-        ax.scatter(data[feature1], data[feature2])
+    #    ax.scatter(data[feature1], data[feature2])
+    #    ax.set_xlabel(feature1)
+    #    ax.set_ylabel(feature2)
+    #    ax.set_title(f'{feature1} et {feature2}')
+        # Ajout d'un point rouge pour le client sélectionné
+    #    if sk_id_curr in data['SK_ID_CURR'].values:
+    #        client_value1 = data[data['SK_ID_CURR'] == sk_id_curr][feature1].values[0]
+    #        client_value2 = data[data['SK_ID_CURR'] == sk_id_curr][feature2].values[0]
+    #        ax.scatter(client_value1, client_value2, color='red')
+    #        ax.legend([f'Client : ({round(client_value1, 2)}, {round(client_value2, 2)})'], labelcolor='red')
+            
+    #    st.pyplot(fig)
+
+        # Diagramme de dispersion pour les données où TARGET = 0
+        ax.scatter(data[data['TARGET'] == 0][feature1], data[data['TARGET'] == 0][feature2], alpha=0.8, label='TARGET = 0')
+        # Diagramme de dispersion pour les données où TARGET = 1
+        ax.scatter(data[data['TARGET'] == 1][feature1], data[data['TARGET'] == 1][feature2], alpha=0.8, label='TARGET = 1')
         ax.set_xlabel(feature1)
         ax.set_ylabel(feature2)
         ax.set_title(f'{feature1} et {feature2}')
+        ax.legend()
+
         # Ajout d'un point rouge pour le client sélectionné
         if sk_id_curr in data['SK_ID_CURR'].values:
             client_value1 = data[data['SK_ID_CURR'] == sk_id_curr][feature1].values[0]
             client_value2 = data[data['SK_ID_CURR'] == sk_id_curr][feature2].values[0]
             ax.scatter(client_value1, client_value2, color='red')
-            ax.legend([f'Client : ({round(client_value1, 2)}, {round(client_value2, 2)})'], labelcolor='red')
-            
+            ax.legend([ 'Granted', 'Refused', f'Client : ({round(client_value1, 2)}, {round(client_value2, 2)})'], labelcolor=['blue', 'orange','red'])
+
         st.pyplot(fig)
     # Création d'un tableau de contingence pour deux caractéristiques catégorielles
     elif feature1_type == 'Cat' and feature2_type == 'Cat':
         contingency_table = pd.crosstab(data[feature1], data[feature2])
         st.write(contingency_table)
     # Création d'un boxplot pour une caractéristique numérique et une caractéristique catégorielle
+    #else:
+    #    if feature1_type == 'Cat':
+    #        cat_feature, num_feature = feature1, feature2
+    #    else:
+    #        cat_feature, num_feature = feature2, feature1
+    #    fig, ax = plt.subplots()
+    #    data.boxplot(column=num_feature, by=cat_feature, ax=ax)
+    #    ax.set_title(f'{num_feature} et {cat_feature}')
+    #    ax.set_xlabel(cat_feature)
+    #    ax.set_ylabel(num_feature)
+    #    # Ajout d'une ligne horizontale pour le client sélectionné dans la catégorie correspondante
+    #    if sk_id_curr in data['SK_ID_CURR'].values:
+    #        client_cat_value = data[data['SK_ID_CURR'] == sk_id_curr][cat_feature].values[0]
+    #        client_num_value = data[data['SK_ID_CURR'] == sk_id_curr][num_feature].values[0]
+    #        for i, label in enumerate(ax.get_xticklabels()):
+    #            if label.get_text() == client_cat_value:
+    #                ax.hlines(client_num_value, i+1-0.4, i+1+0.4, color='red', linestyle='solid', linewidth=2)
+    #                ax.legend([f'Client : {round(client_num_value, 2)}'], labelcolor='red')
+    #                break
+    #    st.pyplot(fig)
+
+    # Création d'un boxplot pour une caractéristique numérique et une caractéristique catégorielle
     else:
         if feature1_type == 'Cat':
             cat_feature, num_feature = feature1, feature2
         else:
             cat_feature, num_feature = feature2, feature1
+
         fig, ax = plt.subplots()
-        data.boxplot(column=num_feature, by=cat_feature, ax=ax)
+
+        # Boxplot coloré en fonction de TARGET
+        sns.boxplot(x=cat_feature, y=num_feature, hue='TARGET', data=data, ax=ax, palette=['blue', 'orange'])
+
         ax.set_title(f'{num_feature} et {cat_feature}')
         ax.set_xlabel(cat_feature)
         ax.set_ylabel(num_feature)
-        # Ajout d'une ligne horizontale pour le client sélectionné dans la catégorie correspondante
+        ax.legend()
+
+        # Ajout d'un point pour le client sélectionné dans la catégorie correspondante
         if sk_id_curr in data['SK_ID_CURR'].values:
             client_cat_value = data[data['SK_ID_CURR'] == sk_id_curr][cat_feature].values[0]
             client_num_value = data[data['SK_ID_CURR'] == sk_id_curr][num_feature].values[0]
-            for i, label in enumerate(ax.get_xticklabels()):
-                if label.get_text() == client_cat_value:
-                    ax.hlines(client_num_value, i+1-0.4, i+1+0.4, color='red', linestyle='solid', linewidth=2)
-                    ax.legend([f'Client : {round(client_num_value, 2)}'], labelcolor='red')
-                    break
+            # Obtenir les étiquettes de l'axe x
+            xticklabels = [label.get_text() for label in ax.get_xticklabels()]
+            if client_cat_value in xticklabels:
+                ax.scatter(xticklabels.index(client_cat_value), client_num_value, color='red', zorder=5)
+                ax.legend(['Granted', 'Refused', f'Client : {round(client_num_value, 2)}'], labelcolor=['blue', 'orange','red'])
+
+        # Ajout d'une ligne horizontale pour le client sélectionné dans la catégorie correspondante
+        #if sk_id_curr in data['SK_ID_CURR'].values:
+        #    client_cat_value = data[data['SK_ID_CURR'] == sk_id_curr][cat_feature].values[0]
+        #    client_num_value = data[data['SK_ID_CURR'] == sk_id_curr][num_feature].values[0]
+        #    ax.hlines(client_num_value, ax.get_xticks()[ax.get_xticklabels().index(client_cat_value)]-0.2, ax.get_xticks()[ax.get_xticklabels().index(client_cat_value)]+0.2, color='red', linestyle='solid', linewidth=2)
+        #    ax.legend([f'Client : {round(client_num_value, 2)}', 'TARGET = 0', 'TARGET = 1'], labelcolor=['red', 'blue', 'orange'])
+
         st.pyplot(fig)
+
+
 
 elif page == 'Update Features':
     st.header('Update Features')
@@ -250,6 +318,8 @@ elif page == 'Update Features':
     ext_source_3 = st.number_input("Enter new EXT_SOURCE_3 value:", min_value=0.0)  # Allowing only positive values
     ext_source_2 = st.number_input("Enter new EXT_SOURCE_2 value:", min_value=0.0)  # Allowing only positive values
     amt_goods_price = st.number_input("Enter new AMT_GOODS_PRICE value:", min_value=0.0)  # Allowing only positive values
+    credit_term = st.number_input("Enter new CREDIT_TERM value:", min_value=0.0)  # Allowing only positive values
+    amt_annuity = st.number_input("Enter new AMT_ANNUITY value:", min_value=0.0)  # Allowing only positive values
 
     if st.button("Update"):
         if sk_id_curr in data['SK_ID_CURR'].values:
@@ -258,6 +328,8 @@ elif page == 'Update Features':
             data.loc[data['SK_ID_CURR'] == sk_id_curr, 'EXT_SOURCE_3'] = ext_source_3
             data.loc[data['SK_ID_CURR'] == sk_id_curr, 'EXT_SOURCE_2'] = ext_source_2
             data.loc[data['SK_ID_CURR'] == sk_id_curr, 'AMT_GOODS_PRICE'] = amt_goods_price
+            data.loc[data['SK_ID_CURR'] == sk_id_curr, 'CREDIT_TERM'] = credit_term
+            data.loc[data['SK_ID_CURR'] == sk_id_curr, 'AMT_ANNUITY'] = amt_annuity
 
             # Save the updated data to the CSV file
             data.to_csv('application_subset.csv', index=False)
